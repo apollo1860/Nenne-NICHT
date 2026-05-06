@@ -390,9 +390,7 @@ function showGuessScreen(message = "") {
 
     <button onclick="checkGuess()">Antwort prüfen</button>
 
-    <button class="danger" onclick="manualExit()">
-      Schreibweise zählt als Treffer / Runde beenden
-    </button>
+  
 
     ${guessLevel > 0 ? `
       <button class="success" onclick="stopAndGive()">Aufhören & ${reward} Schlücke verteilen</button>
@@ -439,15 +437,33 @@ function checkGuess() {
   const nextReward = guessLevel === 1 ? 2 : 4;
 
   render(`
-    <h1>✅ Sicher!</h1>
-    <p>Niemand hatte:</p>
-    <div class="big">${rawGuess}</div>
-    <div class="result">Du kannst jetzt ${nextReward} Schlücke verteilen oder weiterzocken.</div>
+  <h1>✅ Sicher?</h1>
+  <p>Angeblich hatte niemand:</p>
+  <div class="big">${rawGuess}</div>
+  <div class="result">Falls Schreibweise/Abkürzung eigentlich getroffen wurde: Exit drücken.</div>
 
-    <button class="success" onclick="stopAndGive()">Aufhören & ${nextReward} Schlücke verteilen</button>
-    <button class="danger" onclick="showGuessScreen()">Weiterzocken</button>
+  <button class="danger" onclick="manualExitAfterSafe()">Exit: zählt doch als Treffer</button>
+  <button class="success" onclick="stopAndGive()">Aufhören & ${nextReward} Schlücke verteilen</button>
+  <button class="danger" onclick="showGuessScreen()">Weiterzocken</button>
+`);
+
+  
+function manualExitAfterSafe() {
+  const penalty = guessLevel === 1 ? 0 : guessLevel === 2 ? 2 : 4;
+
+  render(`
+    <h1>🛑 Doch Treffer!</h1>
+    <p>Die Antwort wurde nachträglich als Treffer gewertet.</p>
+
+    ${penalty > 0
+      ? `<div class="result">${players[activePlayerIndex]} trinkt ${penalty} Schlücke!</div>`
+      : `<div class="result">Direkt erwischt. Keine Belohnung.</div>`
+    }
+
+    <button onclick="revealRemainingAnswers()">Antworten aufdecken</button>
   `);
 }
+
 
 function failRound(hit) {
   const penalty = guessLevel === 0 ? 0 : guessLevel === 1 ? 2 : 4;
