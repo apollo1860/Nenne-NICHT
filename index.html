@@ -292,7 +292,6 @@ function showActivePlayer() {
   `);
 }
 
-<!-- ERSETZE AB function showCategory() BIS DIREKT VOR function showEnd() MIT DIESEM BLOCK: -->
 
 function showCategory() {
   const categoryIndex = ((round - 1) * players.length + activePlayerIndex) % categories.length;
@@ -446,7 +445,7 @@ function checkGuess() {
   <button class="success" onclick="stopAndGive()">Aufhören & ${nextReward} Schlücke verteilen</button>
   <button class="danger" onclick="showGuessScreen()">Weiterzocken</button>
 `);
-
+}
   
 function manualExitAfterSafe() {
   const penalty = guessLevel === 1 ? 0 : guessLevel === 2 ? 2 : 4;
