@@ -1,8 +1,385 @@
-<!-- Beim Rate-Screen: Exit Button ergänzt -->
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+<title>Trinkspiel</title>
+
+<style>
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: Impact, "Arial Black", system-ui, sans-serif;
+  background: linear-gradient(135deg, #ffcf33, #ff3cac, #784ba0, #00dbde);
+  color: white;
+  overflow-x: hidden;
+}
+
+.app {
+  min-height: 100vh;
+  padding: 22px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.card {
+  width: 100%;
+  max-width: 480px;
+  background: rgba(20, 10, 45, 0.82);
+  border: 5px solid rgba(255,255,255,0.25);
+  border-radius: 32px;
+  padding: 24px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+  text-align: center;
+  animation: pop 0.35s ease;
+}
+
+@keyframes pop {
+  from { transform: scale(0.92); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+h1 {
+  font-size: 42px;
+  margin: 0 0 12px;
+  text-shadow: 4px 4px #000;
+}
+
+h2 {
+  font-size: 32px;
+  margin: 8px 0 14px;
+  color: #ffe66d;
+  text-shadow: 3px 3px #000;
+}
+
+p {
+  font-size: 18px;
+  line-height: 1.35;
+}
+
+.big {
+  font-size: 38px;
+  color: #00ffcc;
+  text-shadow: 3px 3px #000;
+  animation: wiggle 1s infinite;
+}
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(-2deg) scale(1); }
+  50% { transform: rotate(2deg) scale(1.05); }
+}
+
+input {
+  width: 100%;
+  padding: 16px;
+  margin: 8px 0;
+  border-radius: 18px;
+  border: 4px solid white;
+  font-size: 20px;
+  font-family: Impact, "Arial Black", system-ui, sans-serif;
+  text-align: center;
+  outline: none;
+}
+
+button {
+  width: 100%;
+  margin-top: 12px;
+  padding: 18px;
+  border: none;
+  border-radius: 24px;
+  font-size: 22px;
+  font-family: Impact, "Arial Black", system-ui, sans-serif;
+  cursor: pointer;
+  color: #21002f;
+  background: linear-gradient(135deg, #fff200, #ff9f1c);
+  box-shadow: 0 8px 0 #8a4b00;
+  touch-action: manipulation;
+}
+
+button:active {
+  transform: translateY(6px);
+  box-shadow: 0 2px 0 #8a4b00;
+}
+
+.secondary {
+  background: linear-gradient(135deg, #00f5d4, #00bbf9);
+  box-shadow: 0 8px 0 #006b85;
+}
+
+.danger {
+  background: linear-gradient(135deg, #ff006e, #ff4d6d);
+  color: white;
+  box-shadow: 0 8px 0 #820020;
+}
+
+.success {
+  background: linear-gradient(135deg, #80ff72, #7ee8fa);
+  box-shadow: 0 8px 0 #287a2c;
+}
+
+.player-list {
+  margin: 15px 0;
+  text-align: left;
+}
+
+.player-pill {
+  background: rgba(255,255,255,0.18);
+  border-radius: 18px;
+  padding: 10px 14px;
+  margin: 7px 0;
+  font-size: 20px;
+}
+
+.small {
+  font-size: 15px;
+  opacity: 0.85;
+}
+
+.hidden {
+  display: none;
+}
+
+.result {
+  font-size: 28px;
+  margin: 14px 0;
+  padding: 16px;
+  border-radius: 22px;
+  background: rgba(255,255,255,0.15);
+}
+
+.shake {
+  animation: shake 0.35s;
+}
+
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  25% { transform: translateX(-12px); }
+  75% { transform: translateX(12px); }
+}
+
+.confetti {
+  animation: confetti 0.5s;
+}
+
+@keyframes confetti {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08) rotate(2deg); }
+  100% { transform: scale(1); }
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+  <div class="card" id="screen"></div>
+</div>
+
 <script>
+const categories = [
+  { name: "Supermarktketten", level: "W" },
+  { name: "Social Media Plattformen", level: "W" },
+  { name: "Europäische Hauptstädte", level: "M" },
+  { name: "Lieder von Katy Perry", level: "M" },
+  { name: "Lieder von Taylor Swift", level: "M" },
+  { name: "Apps auf dem Handy", level: "V" },
+  { name: "Aktueller Bundesligaverein", level: "M" },
+  { name: "Ehemaliger DFB-Nationalspieler", level: "V" },
+  { name: "Land, das bereits eine WM ausgerichtet hat", level: "M" },
+  { name: "Schauspieler", level: "V" },
+  { name: "Malle Sänger", level: "V" },
+  { name: "Luxusmarke", level: "M" },
+  { name: "Stadt in Bayern", level: "V" },
+  { name: "Stadtteil in München", level: "M" },
+  { name: "Bank", level: "M" },
+  { name: "U-Bahn-Station in München", level: "V" },
+  { name: "Biermarke", level: "V" },
+  { name: "Stadt in Frankreich (min. 100.000 Einwohner)", level: "V" },
+  { name: "Stadt in Spanien (min. 100.000 Einwohner)", level: "V" },
+  { name: "Stadt in Deutschland (min. 100.000 Einwohner)", level: "W" }
+];
+
+const fieldCount = {
+  W: 2,
+  M: 3,
+  V: 5
+};
+
+let players = [];
+let activePlayerIndex = 0;
+let round = 1;
+let currentCategory = null;
+let inputPlayerIndex = 0;
+let secretAnswers = [];
+let guessLevel = 0;
+let usedGuesses = [];
+
+const screen = document.getElementById("screen");
+
+function render(html) {
+  screen.className = "card";
+  screen.innerHTML = html;
+}
+
+function normalize(text) {
+  return text
+    .trim()
+    .toLowerCase()
+    .replaceAll("ä", "ae")
+    .replaceAll("ö", "oe")
+    .replaceAll("ü", "ue")
+    .replaceAll("ß", "ss");
+}
+
+function shuffle(array) {
+  return [...array].sort(() => Math.random() - 0.5);
+}
+
+function showSetup() {
+  render(`
+    <h1>🍻 Trinkspiel 🍻</h1>
+    <p>Mindestens 2 Spieler. Vor dem Start beliebig erweitern.</p>
+
+    <input id="playerName" placeholder="Spielername" />
+
+    <button onclick="addPlayer()">+ Spieler hinzufügen</button>
+
+    <div class="player-list">
+      ${players.map((p, i) => `<div class="player-pill">${i + 1}. ${p}</div>`).join("")}
+    </div>
+
+    <button class="success" onclick="startGame()">Spiel starten</button>
+    <p class="small">10 Runden. Jeder aktive Spieler rät maximal 3 Begriffe.</p>
+  `);
+}
+
+function addPlayer() {
+  const input = document.getElementById("playerName");
+  const name = input.value.trim();
+
+  if (!name) return;
+
+  players.push(name);
+  showSetup();
+}
+
+function startGame() {
+  if (players.length < 2) {
+    alert("Mindestens 2 Spieler nötig!");
+    return;
+  }
+
+  round = 1;
+  activePlayerIndex = 0;
+  categories.sort(() => Math.random() - 0.5);
+  showActivePlayer();
+}
+
+function showActivePlayer() {
+  const player = players[activePlayerIndex];
+
+  render(`
+    <h1>Runde ${round} / 10</h1>
+    <p>Aktiver Spieler:</p>
+    <div class="big">${player}</div>
+    <p>${player} darf gleich NICHT auf den Bildschirm schauen.</p>
+    <button onclick="showCategory()">Kategorie anzeigen</button>
+  `);
+}
+
+function showCategory() {
+  currentCategory = categories[(round - 1) % categories.length];
+  secretAnswers = [];
+  guessLevel = 0;
+  usedGuesses = [];
+
+  render(`
+    <h1>Kategorie</h1>
+    <h2>${currentCategory.name}</h2>
+    <p>${fieldCount[currentCategory.level]} mögliche Felder pro Spieler. Weniger ist erlaubt.</p>
+    <p class="small">Aktiver Spieler schaut weg.</p>
+    <button onclick="startSecretInputs()">Eingabe starten</button>
+  `);
+}
+
+function startSecretInputs() {
+  inputPlayerIndex = 0;
+
+  if (inputPlayerIndex === activePlayerIndex) {
+    inputPlayerIndex++;
+  }
+
+  showSecretInput();
+}
+
+function showSecretInput() {
+  if (inputPlayerIndex >= players.length) {
+    showPassToActivePlayer();
+    return;
+  }
+
+  if (inputPlayerIndex === activePlayerIndex) {
+    inputPlayerIndex++;
+    showSecretInput();
+    return;
+  }
+
+  const player = players[inputPlayerIndex];
+  const count = fieldCount[currentCategory.level];
+
+  let fields = "";
+  for (let i = 0; i < count; i++) {
+    fields += `<input class="secretInput" placeholder="Antwort ${i + 1}" autocomplete="off" />`;
+  }
+
+  render(`
+    <h1>${player}</h1>
+    <h2>${currentCategory.name}</h2>
+    <p>Tippe deine geheimen Antworten ein.</p>
+    <p class="small">Du darfst auch weniger Felder ausfüllen.</p>
+
+    ${fields}
+
+    <button onclick="saveSecretInput()">Fertig / Weitergeben</button>
+  `);
+}
+
+function saveSecretInput() {
+  const inputs = document.querySelectorAll(".secretInput");
+
+  inputs.forEach(input => {
+    const raw = input.value.trim();
+    const clean = normalize(raw);
+
+    if (clean) {
+      secretAnswers.push({
+        player: players[inputPlayerIndex],
+        raw,
+        clean
+      });
+    }
+  });
+
+  inputPlayerIndex++;
+  showSecretInput();
+}
+
+function showPassToActivePlayer() {
+  render(`
+    <h1>Alle fertig!</h1>
+    <p>Jetzt Handy an den aktiven Spieler geben.</p>
+    <div class="big">${players[activePlayerIndex]}</div>
+    <button onclick="showGuessScreen()">Bereit zum Raten</button>
+  `);
+}
+
 function showGuessScreen(message = "") {
   const reward = guessLevel === 0 ? 2 : guessLevel === 1 ? 4 : 8;
-  const penalty = guessLevel === 0 ? 0 : guessLevel === 1 ? 2 : 4;
 
   render(`
     <h1>${players[activePlayerIndex]} rät</h1>
@@ -15,58 +392,79 @@ function showGuessScreen(message = "") {
 
     <button onclick="checkGuess()">Antwort prüfen</button>
 
-    <button class="danger" onclick="manualExit()">
-      Schreibweise zählt als Treffer / Runde beenden
-    </button>
-
     ${guessLevel > 0 ? `
       <button class="success" onclick="stopAndGive()">Aufhören & ${reward} Schlücke verteilen</button>
     ` : ""}
 
-    <p class="small">
-      Exit nutzen bei HSV vs Hamburger SV, FCB vs Bayern München usw.
-    </p>
+    <p class="small">Groß-/Kleinschreibung und Umlaute werden ignoriert.</p>
   `);
 }
 
-function manualExit() {
-  const penalty = guessLevel === 0 ? 0 : guessLevel === 1 ? 2 : 4;
+function checkGuess() {
+  const input = document.getElementById("guessInput");
+  const rawGuess = input.value.trim();
+  const cleanGuess = normalize(rawGuess);
 
+  if (!cleanGuess) return;
+
+  if (usedGuesses.includes(cleanGuess)) {
+    showGuessScreen("Schon genannt. Versuch einen anderen Begriff.");
+    return;
+  }
+
+  usedGuesses.push(cleanGuess);
+
+  const hit = secretAnswers.find(a => a.clean === cleanGuess);
+
+  if (hit) {
+    failRound(hit);
+    return;
+  }
+
+  guessLevel++;
+
+  if (guessLevel >= 3) {
+    screen.classList.add("confetti");
+    render(`
+      <h1>🔥 MAXIMAL ESKALIERT 🔥</h1>
+      <p>Niemand hatte:</p>
+      <div class="big">${rawGuess}</div>
+      <div class="result">Du darfst 8 Schlücke verteilen!</div>
+      <button onclick="nextTurn()">Nächster Spieler</button>
+    `);
+    return;
+  }
+
+  const nextReward = guessLevel === 1 ? 2 : 4;
+
+  screen.classList.add("confetti");
   render(`
-    <h1>🛑 Runde beendet</h1>
-    <p>Die Antwort wurde manuell als Treffer gewertet.</p>
+    <h1>✅ Sicher!</h1>
+    <p>Niemand hatte:</p>
+    <div class="big">${rawGuess}</div>
+    <div class="result">Du kannst jetzt ${nextReward} Schlücke verteilen oder weiterzocken.</div>
 
-    ${penalty > 0
-      ? `<div class="result">${players[activePlayerIndex]} trinkt ${penalty} Schlücke!</div>`
-      : `<div class="result">Direkt erwischt. Keine Belohnung.</div>`
-    }
-
-    <button onclick="revealRemainingAnswers()">Antworten aufdecken</button>
+    <button class="success" onclick="stopAndGive()">Aufhören & ${nextReward} Schlücke verteilen</button>
+    <button class="danger" onclick="showGuessScreen()">Weiterzocken</button>
   `);
 }
 
 function failRound(hit) {
   const penalty = guessLevel === 0 ? 0 : guessLevel === 1 ? 2 : 4;
 
+  screen.classList.add("shake");
+
   render(`
-    <h1>💀 Treffer!</h1>
+    <h1>💀 Falsch!</h1>
     <p>Diese Antwort hatte schon:</p>
     <div class="big">${hit.player}</div>
     <div class="result">Antwort: ${hit.raw}</div>
-
     ${penalty > 0 
-      ? `
-        <div class="result">
-          ${players[activePlayerIndex]} trinkt ${penalty} Schlücke!
-        </div>
-        <div class="result">
-          ${hit.player} darf zusätzlich ${penalty} Schlücke frei verteilen!
-        </div>
-      `
+      ? `<div class="result">${players[activePlayerIndex]} trinkt ${penalty} Schlücke!</div>`
       : `<div class="result">Direkt erwischt. Keine Belohnung.</div>`
     }
 
-    <button onclick="revealRemainingAnswers()">Antworten aufdecken</button>
+    <button onclick="nextTurn()">Nächster Spieler</button>
   `);
 }
 
@@ -77,29 +475,7 @@ function stopAndGive() {
     <h1>🍻 Stabil!</h1>
     <div class="big">${players[activePlayerIndex]}</div>
     <div class="result">Du verteilst ${reward} Schlücke!</div>
-    <button onclick="revealRemainingAnswers()">Antworten aufdecken</button>
-  `);
-}
-
-function revealRemainingAnswers() {
-  const answersHtml = secretAnswers.length
-    ? secretAnswers.map(a => `
-        <div class="player-pill">
-          <strong>${a.player}:</strong> ${a.raw}
-        </div>
-      `).join("")
-    : `<p>Keine Antworten eingetragen.</p>`;
-
-  render(`
-    <h1>👀 Aufdeckung</h1>
-    <h2>${currentCategory.name}</h2>
-    <p>Das waren die geheimen Antworten:</p>
-
-    <div class="player-list">
-      ${answersHtml}
-    </div>
-
-    <button onclick="nextTurn()">Nächster Spieler / neue Kategorie</button>
+    <button onclick="nextTurn()">Nächster Spieler</button>
   `);
 }
 
@@ -119,20 +495,16 @@ function nextTurn() {
   showActivePlayer();
 }
 
-function showCategory() {
-  const categoryIndex = ((round - 1) * players.length + activePlayerIndex) % categories.length;
-  currentCategory = categories[categoryIndex];
-
-  secretAnswers = [];
-  guessLevel = 0;
-  usedGuesses = [];
-
+function showEnd() {
   render(`
-    <h1>Kategorie</h1>
-    <h2>${currentCategory.name}</h2>
-    <p>${fieldCount[currentCategory.level]} mögliche Felder pro Spieler. Weniger ist erlaubt.</p>
-    <p class="small">Aktiver Spieler schaut weg.</p>
-    <button onclick="startSecretInputs()">Eingabe starten</button>
+    <h1>🏁 Spiel vorbei!</h1>
+    <p>10 Runden geschafft.</p>
+    <div class="big">Prost, ihr Legenden!</div>
+    <button onclick="showSetup()">Neues Spiel</button>
   `);
 }
+
+showSetup();
 </script>
+</body>
+</html>
