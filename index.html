@@ -1,0 +1,138 @@
+<!-- Beim Rate-Screen: Exit Button ergänzt -->
+<script>
+function showGuessScreen(message = "") {
+  const reward = guessLevel === 0 ? 2 : guessLevel === 1 ? 4 : 8;
+  const penalty = guessLevel === 0 ? 0 : guessLevel === 1 ? 2 : 4;
+
+  render(`
+    <h1>${players[activePlayerIndex]} rät</h1>
+    <h2>${currentCategory.name}</h2>
+    <p>Versuch ${guessLevel + 1} von 3</p>
+
+    ${message ? `<div class="result">${message}</div>` : ""}
+
+    <input id="guessInput" placeholder="Deine Antwort" autocomplete="off" />
+
+    <button onclick="checkGuess()">Antwort prüfen</button>
+
+    <button class="danger" onclick="manualExit()">
+      Schreibweise zählt als Treffer / Runde beenden
+    </button>
+
+    ${guessLevel > 0 ? `
+      <button class="success" onclick="stopAndGive()">Aufhören & ${reward} Schlücke verteilen</button>
+    ` : ""}
+
+    <p class="small">
+      Exit nutzen bei HSV vs Hamburger SV, FCB vs Bayern München usw.
+    </p>
+  `);
+}
+
+function manualExit() {
+  const penalty = guessLevel === 0 ? 0 : guessLevel === 1 ? 2 : 4;
+
+  render(`
+    <h1>🛑 Runde beendet</h1>
+    <p>Die Antwort wurde manuell als Treffer gewertet.</p>
+
+    ${penalty > 0
+      ? `<div class="result">${players[activePlayerIndex]} trinkt ${penalty} Schlücke!</div>`
+      : `<div class="result">Direkt erwischt. Keine Belohnung.</div>`
+    }
+
+    <button onclick="revealRemainingAnswers()">Antworten aufdecken</button>
+  `);
+}
+
+function failRound(hit) {
+  const penalty = guessLevel === 0 ? 0 : guessLevel === 1 ? 2 : 4;
+
+  render(`
+    <h1>💀 Treffer!</h1>
+    <p>Diese Antwort hatte schon:</p>
+    <div class="big">${hit.player}</div>
+    <div class="result">Antwort: ${hit.raw}</div>
+
+    ${penalty > 0 
+      ? `
+        <div class="result">
+          ${players[activePlayerIndex]} trinkt ${penalty} Schlücke!
+        </div>
+        <div class="result">
+          ${hit.player} darf zusätzlich ${penalty} Schlücke frei verteilen!
+        </div>
+      `
+      : `<div class="result">Direkt erwischt. Keine Belohnung.</div>`
+    }
+
+    <button onclick="revealRemainingAnswers()">Antworten aufdecken</button>
+  `);
+}
+
+function stopAndGive() {
+  const reward = guessLevel === 1 ? 2 : guessLevel === 2 ? 4 : 8;
+
+  render(`
+    <h1>🍻 Stabil!</h1>
+    <div class="big">${players[activePlayerIndex]}</div>
+    <div class="result">Du verteilst ${reward} Schlücke!</div>
+    <button onclick="revealRemainingAnswers()">Antworten aufdecken</button>
+  `);
+}
+
+function revealRemainingAnswers() {
+  const answersHtml = secretAnswers.length
+    ? secretAnswers.map(a => `
+        <div class="player-pill">
+          <strong>${a.player}:</strong> ${a.raw}
+        </div>
+      `).join("")
+    : `<p>Keine Antworten eingetragen.</p>`;
+
+  render(`
+    <h1>👀 Aufdeckung</h1>
+    <h2>${currentCategory.name}</h2>
+    <p>Das waren die geheimen Antworten:</p>
+
+    <div class="player-list">
+      ${answersHtml}
+    </div>
+
+    <button onclick="nextTurn()">Nächster Spieler / neue Kategorie</button>
+  `);
+}
+
+function nextTurn() {
+  activePlayerIndex++;
+
+  if (activePlayerIndex >= players.length) {
+    activePlayerIndex = 0;
+    round++;
+  }
+
+  if (round > 10) {
+    showEnd();
+    return;
+  }
+
+  showActivePlayer();
+}
+
+function showCategory() {
+  const categoryIndex = ((round - 1) * players.length + activePlayerIndex) % categories.length;
+  currentCategory = categories[categoryIndex];
+
+  secretAnswers = [];
+  guessLevel = 0;
+  usedGuesses = [];
+
+  render(`
+    <h1>Kategorie</h1>
+    <h2>${currentCategory.name}</h2>
+    <p>${fieldCount[currentCategory.level]} mögliche Felder pro Spieler. Weniger ist erlaubt.</p>
+    <p class="small">Aktiver Spieler schaut weg.</p>
+    <button onclick="startSecretInputs()">Eingabe starten</button>
+  `);
+}
+</script>
