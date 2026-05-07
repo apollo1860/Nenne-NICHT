@@ -75,7 +75,7 @@ p {
   50% { transform: rotate(2deg) scale(1.05); }
 }
 
-input {
+input, select {
   width: 100%;
   padding: 16px;
   margin: 8px 0;
@@ -85,6 +85,12 @@ input {
   font-family: Impact, "Arial Black", system-ui, sans-serif;
   text-align: center;
   outline: none;
+}
+
+label {
+  display: block;
+  font-size: 18px;
+  margin-top: 12px;
 }
 
 button {
@@ -123,6 +129,12 @@ button:active {
   box-shadow: 0 8px 0 #287a2c;
 }
 
+.plus-btn {
+  font-size: 34px;
+  border-radius: 50px;
+  background: linear-gradient(135deg, #00ffcc, #fff200);
+}
+
 .player-list {
   margin: 15px 0;
   text-align: left;
@@ -141,36 +153,12 @@ button:active {
   opacity: 0.85;
 }
 
-.hidden {
-  display: none;
-}
-
 .result {
   font-size: 28px;
   margin: 14px 0;
   padding: 16px;
   border-radius: 22px;
   background: rgba(255,255,255,0.15);
-}
-
-.shake {
-  animation: shake 0.35s;
-}
-
-@keyframes shake {
-  0%,100% { transform: translateX(0); }
-  25% { transform: translateX(-12px); }
-  75% { transform: translateX(12px); }
-}
-
-.confetti {
-  animation: confetti 0.5s;
-}
-
-@keyframes confetti {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.08) rotate(2deg); }
-  100% { transform: scale(1); }
 }
 </style>
 </head>
@@ -181,7 +169,7 @@ button:active {
 </div>
 
 <script>
-const categories = [
+const defaultCategories = [
   { name: "Supermarktketten", level: "W" },
   { name: "Social Media Plattformen", level: "W" },
   { name: "Europäische Hauptstädte", level: "M" },
@@ -210,6 +198,11 @@ const fieldCount = {
   V: 5
 };
 
+let categories = [...defaultCategories];
+let customCategories = [];
+let useOnlyCustomCategories = false;
+let customAnswerCount = 3;
+
 let players = [];
 let activePlayerIndex = 0;
 let round = 1;
@@ -236,36 +229,77 @@ function normalize(text) {
     .replaceAll("ß", "ss");
 }
 
-function shuffle(array) {
-  return [...array].sort(() => Math.random() - 0.5);
-}
-
-function showSetup() {
+function showSetup(showCustom = false) {
   render(`
     <h1>🍻 Trinkspiel 🍻</h1>
     <p>Mindestens 2 Spieler. Vor dem Start beliebig erweitern.</p>
 
     <input id="playerName" placeholder="Spielername" />
-
     <button onclick="addPlayer()">+ Spieler hinzufügen</button>
 
     <div class="player-list">
       ${players.map((p, i) => `<div class="player-pill">${i + 1}. ${p}</div>`).join("")}
     </div>
 
+    <button class="plus-btn" onclick="showSetup(true)">＋ Eigene Kategorien</button>
+
+    ${showCustom ? `
+      <hr>
+      <h2>Eigene Kategorien</h2>
+
+      <input id="customCategoryName" placeholder="Neue Kategorie" />
+
+      <label>Antwortfelder für diese Kategorie:</label>
+      <select id="customCategoryLevel">
+        <option value="W">2 Antworten</option>
+        <option value="M" selected>3 Antworten</option>
+        <option value="V">5 Antworten</option>
+      </select>
+
+      <button class="secondary" onclick="addCustomCategory()">Kategorie hinzufügen</button>
+
+      <div class="player-list">
+        ${customCategories.length
+          ? customCategories.map((c, i) => `<div class="player-pill">${i + 1}. ${c.name} (${fieldCount[c.level]} Felder)</div>`).join("")
+          : `<p class="small">Noch keine eigenen Kategorien.</p>`
+        }
+      </div>
+
+      <label>
+        <input type="checkbox" id="onlyCustomToggle" ${useOnlyCustomCategories ? "checked" : ""} onchange="toggleOnlyCustom()" />
+        Nur mit eigenen Kategorien spielen
+      </label>
+    ` : ""}
+
     <button class="success" onclick="startGame()">Spiel starten</button>
     <p class="small">10 Runden. Jeder aktive Spieler rät maximal 3 Begriffe.</p>
   `);
+
+  if (showCustom) {
+    setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }), 100);
+  }
 }
 
 function addPlayer() {
   const input = document.getElementById("playerName");
   const name = input.value.trim();
+  if (!name) return;
+  players.push(name);
+  showSetup();
+}
+
+function addCustomCategory() {
+  const name = document.getElementById("customCategoryName").value.trim();
+  const level = document.getElementById("customCategoryLevel").value;
 
   if (!name) return;
 
-  players.push(name);
-  showSetup();
+  customCategories.push({ name, level, custom: true });
+  showSetup(true);
+}
+
+function toggleOnlyCustom() {
+  useOnlyCustomCategories = document.getElementById("onlyCustomToggle").checked;
 }
 
 function startGame() {
@@ -274,9 +308,19 @@ function startGame() {
     return;
   }
 
+  if (useOnlyCustomCategories && customCategories.length === 0) {
+    alert("Du brauchst mindestens eine eigene Kategorie!");
+    return;
+  }
+
+  categories = useOnlyCustomCategories
+    ? [...customCategories]
+    : [...defaultCategories, ...customCategories];
+
+  categories.sort(() => Math.random() - 0.5);
+
   round = 1;
   activePlayerIndex = 0;
-  categories.sort(() => Math.random() - 0.5);
   showActivePlayer();
 }
 
@@ -292,7 +336,6 @@ function showActivePlayer() {
   `);
 }
 
-
 function showCategory() {
   const categoryIndex = ((round - 1) * players.length + activePlayerIndex) % categories.length;
   currentCategory = categories[categoryIndex];
@@ -305,7 +348,6 @@ function showCategory() {
     <h1>Kategorie</h1>
     <h2>${currentCategory.name}</h2>
     <p>${fieldCount[currentCategory.level]} mögliche Felder pro Spieler. Weniger ist erlaubt.</p>
-    <p class="small">Aktiver Spieler schaut weg.</p>
     <button onclick="startSecretInputs()">Eingabe starten</button>
   `);
 }
@@ -328,7 +370,6 @@ function showSecretInput() {
     return;
   }
 
-  const player = players[inputPlayerIndex];
   const count = fieldCount[currentCategory.level];
 
   let fields = "";
@@ -337,7 +378,7 @@ function showSecretInput() {
   }
 
   render(`
-    <h1>${player}</h1>
+    <h1>${players[inputPlayerIndex]}</h1>
     <h2>${currentCategory.name}</h2>
     <p>Tippe deine geheimen Antworten ein.</p>
     <p class="small">Du darfst auch weniger Felder ausfüllen.</p>
@@ -389,13 +430,9 @@ function showGuessScreen(message = "") {
 
     <button onclick="checkGuess()">Antwort prüfen</button>
 
-  
-
     ${guessLevel > 0 ? `
       <button class="success" onclick="stopAndGive()">Aufhören & ${reward} Schlücke verteilen</button>
     ` : ""}
-
-    <p class="small">Exit nutzen bei HSV vs Hamburger SV, FCB vs Bayern München usw.</p>
   `);
 }
 
@@ -413,10 +450,10 @@ function checkGuess() {
 
   usedGuesses.push(cleanGuess);
 
-  const hit = secretAnswers.find(a => a.clean === cleanGuess);
+  const hits = secretAnswers.filter(a => a.clean === cleanGuess);
 
-  if (hit) {
-    failRound(hit);
+  if (hits.length > 0) {
+    failRound(hits);
     return;
   }
 
@@ -436,17 +473,40 @@ function checkGuess() {
   const nextReward = guessLevel === 1 ? 2 : 4;
 
   render(`
-  <h1>✅ Sicher?</h1>
-  <p>Angeblich hatte niemand:</p>
-  <div class="big">${rawGuess}</div>
-  <div class="result">Falls Schreibweise/Abkürzung eigentlich getroffen wurde: Exit drücken.</div>
+    <h1>✅ Sicher?</h1>
+    <p>Angeblich hatte niemand:</p>
+    <div class="big">${rawGuess}</div>
+    <div class="result">Falls Schreibweise/Abkürzung eigentlich getroffen wurde: Exit drücken.</div>
 
-  <button class="danger" onclick="manualExitAfterSafe()">Exit: zählt doch als Treffer</button>
-  <button class="success" onclick="stopAndGive()">Aufhören & ${nextReward} Schlücke verteilen</button>
-  <button class="danger" onclick="showGuessScreen()">Weiterzocken</button>
-`);
+    <button class="danger" onclick="manualExitAfterSafe()">Exit: zählt doch als Treffer</button>
+    <button class="success" onclick="stopAndGive()">Aufhören & ${nextReward} Schlücke verteilen</button>
+    <button class="danger" onclick="showGuessScreen()">Weiterzocken</button>
+  `);
 }
-  
+
+function failRound(hits) {
+  const penalty = guessLevel === 0 ? 0 : guessLevel === 1 ? 2 : 4;
+  const hitNames = [...new Set(hits.map(h => h.player))].join(", ");
+  const hitWords = hits.map(h => `${h.player}: ${h.raw}`).join("<br>");
+
+  render(`
+    <h1>💀 Treffer!</h1>
+    <p>Diese Antwort hatten:</p>
+    <div class="big">${hitNames}</div>
+    <div class="result">${hitWords}</div>
+
+    ${penalty > 0 
+      ? `
+        <div class="result">${players[activePlayerIndex]} trinkt ${penalty} Schlücke!</div>
+        <div class="result">${hitNames} dürfen jeweils zusätzlich ${penalty} Schlücke frei verteilen!</div>
+      `
+      : `<div class="result">Direkt erwischt. Keine Belohnung.</div>`
+    }
+
+    <button onclick="revealRemainingAnswers()">Antworten aufdecken</button>
+  `);
+}
+
 function manualExitAfterSafe() {
   const penalty = guessLevel === 1 ? 0 : guessLevel === 2 ? 2 : 4;
 
@@ -459,44 +519,7 @@ function manualExitAfterSafe() {
       : `<div class="result">Direkt erwischt. Keine Belohnung.</div>`
     }
 
-    <button onclick="revealRemainingAnswers()">Antworten aufdecken</button>
-  `);
-}
-
-
-function failRound(hit) {
-  const penalty = guessLevel === 0 ? 0 : guessLevel === 1 ? 2 : 4;
-
-  render(`
-    <h1>💀 Treffer!</h1>
-    <p>Diese Antwort hatte schon:</p>
-    <div class="big">${hit.player}</div>
-    <div class="result">Antwort: ${hit.raw}</div>
-
-    ${penalty > 0 
-      ? `
-        <div class="result">${players[activePlayerIndex]} trinkt ${penalty} Schlücke!</div>
-        <div class="result">${hit.player} darf zusätzlich ${penalty} Schlücke frei verteilen!</div>
-      `
-      : `<div class="result">Direkt erwischt. Keine Belohnung.</div>`
-    }
-
-    <button onclick="revealRemainingAnswers()">Antworten aufdecken</button>
-  `);
-}
-
-function manualExit() {
-  const penalty = guessLevel === 0 ? 0 : guessLevel === 1 ? 2 : 4;
-
-  render(`
-    <h1>🛑 Runde beendet</h1>
-    <p>Die Antwort wurde manuell als Treffer gewertet.</p>
-
-    ${penalty > 0
-      ? `<div class="result">${players[activePlayerIndex]} trinkt ${penalty} Schlücke!</div>`
-      : `<div class="result">Direkt erwischt. Keine Belohnung.</div>`
-    }
-
+    <p class="small">Wer die passende Antwort eingetragen hatte, darf entsprechend verteilen.</p>
     <button onclick="revealRemainingAnswers()">Antworten aufdecken</button>
   `);
 }
