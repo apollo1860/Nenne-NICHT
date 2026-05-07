@@ -400,7 +400,29 @@ function showActivePlayer() {
     <button onclick="showCategory()">Kategorie anzeigen</button>
   `);
 }
+function rerollCategory() {
+  const currentName = currentCategory.name;
 
+  let available = categories.filter(c => c.name !== currentName);
+
+  if (available.length === 0) return;
+
+  currentCategory = available[Math.floor(Math.random() * available.length)];
+
+  render(`
+    <h1>Kategorie</h1>
+    <h2>${currentCategory.name}</h2>
+    <p>${fieldCount[currentCategory.level]} mögliche Felder pro Spieler. Weniger ist erlaubt.</p>
+
+    <button class="secondary" onclick="rerollCategory()">
+      🎲 Neue Kategorie
+    </button>
+
+    <button onclick="startSecretInputs()">
+      Eingabe starten
+    </button>
+  `);
+}
 function showCategory() {
   const categoryIndex = ((round - 1) * players.length + activePlayerIndex) % categories.length;
   currentCategory = categories[categoryIndex];
@@ -410,11 +432,18 @@ function showCategory() {
   usedGuesses = [];
 
   render(`
-    <h1>Kategorie</h1>
-    <h2>${currentCategory.name}</h2>
-    <p>${fieldCount[currentCategory.level]} mögliche Felder pro Spieler. Weniger ist erlaubt.</p>
-    <button onclick="startSecretInputs()">Eingabe starten</button>
-  `);
+  <h1>Kategorie</h1>
+  <h2>${currentCategory.name}</h2>
+  <p>${fieldCount[currentCategory.level]} mögliche Felder pro Spieler. Weniger ist erlaubt.</p>
+
+  <button class="secondary" onclick="rerollCategory()">
+    🎲 Neue Kategorie
+  </button>
+
+  <button onclick="startSecretInputs()">
+    Eingabe starten
+  </button>
+`);
 }
 
 function startSecretInputs() {
