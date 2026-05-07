@@ -499,7 +499,40 @@ function showGuessScreen(message = "") {
     ` : ""}
   `);
 }
+const levelTexts = {
+  1: [
+    "Bare Minimum",
+    "Glück gehabt",
+    "Gerade so überlebt",
+    "Anfängerbonus",
+    "Solider Start",
+    "Noch warmgelaufen"
+  ],
 
+  2: [
+    "Stabil",
+    "Riskanter Typ",
+    "Jetzt wird’s ernst",
+    "Kurz vorm Größenwahn",
+    "Adrenalinmodus",
+    "Eskalationsstufe Gelb"
+  ],
+
+  3: [
+    "Maximal eskaliert",
+    "Amina koyim",
+    "Kranker Kerl",
+    "Komplett geisteskrank",
+    "Unaufhaltbar",
+    "Endboss-Modus",
+    "Absolute Zerstörung"
+  ]
+};
+
+function randomLevelText(level) {
+  const arr = levelTexts[level];
+  return arr[Math.floor(Math.random() * arr.length)];
+}
 function checkGuess() {
   const input = document.getElementById("guessInput");
   const rawGuess = input.value.trim();
@@ -525,7 +558,7 @@ function checkGuess() {
 
   if (guessLevel >= 3) {
     render(`
-      <h1>🔥 MAXIMAL ESKALIERT 🔥</h1>
+      <h1>🔥 ${randomLevelText(3)} 🔥</h1>
       <p>Niemand hatte:</p>
       <div class="big">${rawGuess}</div>
       <div class="result">Du darfst 8 Schlücke verteilen!</div>
@@ -537,7 +570,7 @@ function checkGuess() {
   const nextReward = guessLevel === 1 ? 2 : 4;
 
   render(`
-    <h1>✅ Sicher?</h1>
+    <h1>✅ ${randomLevelText(guessLevel)}</h1>
     <p>Angeblich hatte niemand:</p>
     <div class="big">${rawGuess}</div>
     <div class="result">Falls Schreibweise/Abkürzung eigentlich getroffen wurde: Exit drücken.</div>
