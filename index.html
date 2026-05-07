@@ -500,32 +500,66 @@ function showGuessScreen(message = "") {
   `);
 }
 const levelTexts = {
+    0: [
+    "Wie Omas Füße",
+    "Wie kann man so schlecht sein",
+    "Niete",
+    "Du Straßenköter",
+    "Depp",
+    "Du Lellek",
+    "Sharmuta",
+    "Hodenkobold",
+    "Du Loser",
+    "Kleiner fetter Loser",
+    "Idiot",
+    "Delulu",
+    "Cringe Brudi",
+    "Du Hund",
+    "Du Dumme Sau"
+  ],
+  
   1: [
     "Bare Minimum",
-    "Glück gehabt",
-    "Gerade so überlebt",
-    "Anfängerbonus",
-    "Solider Start",
-    "Noch warmgelaufen"
+    "Faule Sau",
+    "Meh",
+    "O.K.",
+    "Besser als gar nix",
+    "Immerhin",
+    "Solide",
+    "Warm-Up"
   ],
 
   2: [
-    "Stabil",
-    "Riskanter Typ",
-    "Jetzt wird’s ernst",
-    "Kurz vorm Größenwahn",
-    "Adrenalinmodus",
-    "Eskalationsstufe Gelb"
+    "Alles Gucci",
+    "Nice",
+    "Geilomat",
+    "Astrein",
+    "Knorke",
+    "Supi",
+    "Fresher Boy",
+    "Tippi Toppi",
+    "Ob's bei euch gerade genauso ist",
+    "Sag Vallah",
+    "Überdurchschnittlich gut",
+    "Mensch geblieben",
+    "Doller Dyp"
   ],
 
   3: [
     "Maximal eskaliert",
+    "AURA",
+    "Slay 💅",
+    "Trinkspiel-Maus",
+    "G.O.A.T",
+    "Jung, brutal, gutaussehend",
+    "Gestört aber geil",
+    "Absoluter Ficker",
     "Amina koyim",
     "Kranker Kerl",
-    "Komplett geisteskrank",
-    "Unaufhaltbar",
-    "Endboss-Modus",
-    "Absolute Zerstörung"
+    "Mashallah, einfach der Hübsche",
+    "Ein Krieger wurde geweckt",
+    "SACH MA SCHALKEEEE",
+    "Nur Gott kann dich richten"
   ]
 };
 
@@ -587,7 +621,7 @@ function failRound(hits) {
   const hitWords = hits.map(h => `${h.player}: ${h.raw}`).join("<br>");
 
   render(`
-    <h1>💀 Treffer!</h1>
+    <h1>💀 ${randomLevelText(guessLevel)}</h1>
     <p>Diese Antwort hatten:</p>
     <div class="big">${hitNames}</div>
     <div class="result">${hitWords}</div>
