@@ -1,1 +1,758 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+<title>Trinkspiel</title>
 
+<style>
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: Impact, "Arial Black", system-ui, sans-serif;
+  background: linear-gradient(135deg, #ffcf33, #ff3cac, #784ba0, #00dbde);
+  color: white;
+  overflow-x: hidden;
+}
+
+.app {
+  min-height: 100vh;
+  padding: 22px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.card {
+  width: 100%;
+  max-width: 480px;
+  background: rgba(20, 10, 45, 0.82);
+  border: 5px solid rgba(255,255,255,0.25);
+  border-radius: 32px;
+  padding: 24px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+  text-align: center;
+  animation: pop 0.35s ease;
+}
+
+@keyframes pop {
+  from { transform: scale(0.92); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+h1 {
+  font-size: 42px;
+  margin: 0 0 12px;
+  text-shadow: 4px 4px #000;
+}
+
+h2 {
+  font-size: 32px;
+  margin: 8px 0 14px;
+  color: #ffe66d;
+  text-shadow: 3px 3px #000;
+}
+
+p {
+  font-size: 18px;
+  line-height: 1.35;
+}
+
+.big {
+  font-size: 38px;
+  color: #00ffcc;
+  text-shadow: 3px 3px #000;
+  animation: wiggle 1s infinite;
+}
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(-2deg) scale(1); }
+  50% { transform: rotate(2deg) scale(1.05); }
+}
+
+input, select {
+  width: 100%;
+  padding: 16px;
+  margin: 8px 0;
+  border-radius: 18px;
+  border: 4px solid white;
+  font-size: 20px;
+  font-family: Impact, "Arial Black", system-ui, sans-serif;
+  text-align: center;
+  outline: none;
+}
+
+label {
+  display: block;
+  font-size: 18px;
+  margin-top: 12px;
+}
+
+button {
+  width: 100%;
+  margin-top: 12px;
+  padding: 18px;
+  border: none;
+  border-radius: 24px;
+  font-size: 22px;
+  font-family: Impact, "Arial Black", system-ui, sans-serif;
+  cursor: pointer;
+  color: #21002f;
+  background: linear-gradient(135deg, #fff200, #ff9f1c);
+  box-shadow: 0 8px 0 #8a4b00;
+  touch-action: manipulation;
+}
+
+button:active {
+  transform: translateY(6px);
+  box-shadow: 0 2px 0 #8a4b00;
+}
+
+.secondary {
+  background: linear-gradient(135deg, #00f5d4, #00bbf9);
+  box-shadow: 0 8px 0 #006b85;
+}
+
+.danger {
+  background: linear-gradient(135deg, #ff006e, #ff4d6d);
+  color: white;
+  box-shadow: 0 8px 0 #820020;
+}
+
+.success {
+  background: linear-gradient(135deg, #80ff72, #7ee8fa);
+  box-shadow: 0 8px 0 #287a2c;
+}
+
+.plus-btn {
+  font-size: 34px;
+  border-radius: 50px;
+  background: linear-gradient(135deg, #00ffcc, #fff200);
+}
+
+.player-list {
+  margin: 15px 0;
+  text-align: left;
+}
+
+.player-pill {
+  background: rgba(255,255,255,0.18);
+  border-radius: 18px;
+  padding: 10px 14px;
+  margin: 7px 0;
+  font-size: 20px;
+}
+
+.small {
+  font-size: 15px;
+  opacity: 0.85;
+}
+
+.result {
+  font-size: 28px;
+  margin: 14px 0;
+  padding: 16px;
+  border-radius: 22px;
+  background: rgba(255,255,255,0.15);
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+  <div class="card" id="screen"></div>
+</div>
+
+<script>
+const defaultCategories = [
+  { name: "Supermarktketten", level: "W" },
+  { name: "Länderflaggen mit Schwarz", level: "W" },
+  { name: "Browser", level: "W" },
+  { name: "Nicht-Deutsches Bier", level: "M" },
+  { name: "Hochprozentiger Alkohol (pur)", level: "W" },
+  { name: "Inselstaat", level: "W" },
+  { name: "Lied von Cro", level: "W" }, 
+  { name: "Lied von Pitbull", level: "W" },
+  { name: "Lied von Lady Gaga", level: "W" },
+  { name: "Land in Afrika", level: "M" },
+  { name: "Land in Nord- und Mittelamerika", level: "W" },
+  { name: "Hauptstadt in Asien", level: "W" },
+{ name: "Länderflaggen mit Blau", level: "V" },
+{ name: "Länderflaggen mit Grün", level: "M" },
+{ name: "Länderflaggen mit Rot", level: "V" },
+{ name: "Länderflaggen mit Weiß", level: "V" },
+{ name: "Nomen, die im Deutschlandlied vorkommen", level: "M" },
+{ name: "Nomen, die in dem Lied Skandal im Sperrbezirk vorkommen", level: "M" },
+{ name: "Deutsche aktive TV-Sender", level: "V" },
+{ name: "Burger bei McDonalds", level: "M" },
+{ name: "Bundesland", level: "W" },
+{ name: "Hauptstadt in Europa", level: "M" },
+{ name: "Bundesstaat in der USA", level: "M" },
+{ name: "Gesetzlicher Feiertag in Bayern", level: "W" },
+{ name: "Partei aus dem Bundestagswahlkampf 2025", level: "W" },
+{ name: "Land mit min. 80 Mio. Einwohnern", level: "W" },
+{ name: "Nachbarland von Deutschland", level: "W" },
+{ name: "Land mit I", level: "W" },
+{ name: "Land mit K", level: "W" },
+{ name: "Land mit M", level: "W" },
+{ name: "Land mit P", level: "W" },
+{ name: "Land mit A (nicht Ä)", level: "W" },
+{ name: "Land mit B", level: "W" },
+{ name: "Land mit T", level: "W" },
+{ name: "Land mit S", level: "W" },
+{ name: "Land mit G", level: "W" },
+{ name: "Tier aus dem Tierpark Hellabrunn", level: "W" },
+{ name: "Land mit der Endung -land", level: "W" },
+{ name: "Land mit der Endung -ien", level: "W" },
+{ name: "Lieferdienst aus Deutschland", level: "W" },
+{ name: "Deutsche Automarke", level: "W" },
+{ name: "Tankstellen in Deutschland", level: "W" },
+{ name: "Land mit Meerzugang", level: "M" },
+{ name: "Land mit Euro als Währung", level: "W" },
+{ name: "Synonym für Penis", level: "M" },
+{ name: "Synonym für Vagina", level: "M" },
+{ name: "Fast-Food-Kette in Deutschland", level: "W" },
+{ name: "Straße bei Monopoly", level: "W" },
+{ name: "Zahl von 1 bis 20", level: "M" },
+{ name: "Monat", level: "W" },
+{ name: "Wochentag", level: "W" },
+{ name: "Euro Schein (nur Zahl)", level: "W" },
+{ name: "Zahl von 1 bis 10", level: "W" },
+{ name: "Sportart ohne Ball", level: "M" },
+{ name: "Uhrzeit (nur volle Stunden)", level: "M" },
+{ name: "Jahreszahl ab 2000", level: "M" },
+{ name: "Münchner U-Bahn Endstation", level: "W" },
+{ name: "Olympische Disziplin", level: "W" },
+{ name: "Fluggesellschaft", level: "M" },
+{ name: "Bekannte Sportart die auf -ball endet", level: "W" },
+{ name: "Club in München", level: "W" },
+  { name: "Schulfach im Gymnasium", level: "M"},
+  { name: "Buchstabe aus dem Alphabet", level: "M"},
+  { name: "Aktiver deutscher TV-Moderator", level: "W"},
+  { name: "Gängiger deutscher Vorname mit max. 6 Buchstaben, der mit M beginnt", level: "W"},
+  { name: "Fußballposition", level: "W"},
+  { name: "Teilnehmendes Land bei der Fußball-WM 2026", level: "V"},
+  { name: "Streaming-Anbieter in Deutschland", level: "M"},
+  { name: "Obst aus dem Supermarkt", level: "M"},
+  { name: "Land in Afrika", level: "M"},
+  { name: "Land in Südamerika", level: "W"},
+  { name: "Verb-Synonym für Geschlechtsverkehr", level: "W"},
+  { name: "Grundfarbe", level: "W"},
+  { name: "Social Media Plattformen", level: "W" },
+  { name: "Europäische Hauptstädte", level: "M" },
+  { name: "Lied von Katy Perry", level: "M" },
+  { name: "Lied von Taylor Swift", level: "M" },
+  { name: "Vorinstallierte App auf dem Handy", level: "W" },
+  { name: "Aktueller Bundesligaverein", level: "M" },
+  { name: "Ehemaliger DFB-Nationalspieler", level: "V" },
+  { name: "Land, das bereits eine WM ausgerichtet hat", level: "M" },
+  { name: "Schauspieler", level: "V" },
+  { name: "Malle Sänger oder Band", level: "V" },
+  { name: "Luxusmarke", level: "M" },
+  { name: "Stadt in Bayern", level: "V" },
+  { name: "Stadtteil in München", level: "M" },
+  { name: "Bank", level: "M" },
+  { name: "U-Bahn-Station in München", level: "V" },
+  { name: "Biermarke", level: "V" },
+  { name: "Dating-Plattform", level: "W"},
+  { name: "Pornowebsite (ohne Domain)", level: "W"},
+  { name: "Stadt in Frankreich (min. 100.000 Einwohner)", level: "V" },
+  { name: "Stadt in Spanien (min. 100.000 Einwohner)", level: "V" },
+  { name: "Stadt in Deutschland (min. 100.000 Einwohner)", level: "W" }
+];
+
+const fieldCount = {
+  W: 2,
+  M: 3,
+  V: 5
+};
+
+let categories = [...defaultCategories];
+let customCategories = [];
+let useOnlyCustomCategories = false;
+let customAnswerCount = 3;
+
+let players = [];
+let activePlayerIndex = 0;
+let round = 1;
+let currentCategory = null;
+let inputPlayerIndex = 0;
+let secretAnswers = [];
+let guessLevel = 0;
+let usedGuesses = [];
+
+const screen = document.getElementById("screen");
+
+function render(html) {
+  screen.className = "card";
+  screen.innerHTML = html;
+}
+
+function normalize(text) {
+  return text
+    .trim()
+    .toLowerCase()
+    .replaceAll("ä", "ae")
+    .replaceAll("ö", "oe")
+    .replaceAll("ü", "ue")
+    .replaceAll("ß", "ss");
+}
+
+function showSetup(showCustom = false) {
+  render(`
+    <h1>🍻 Trinkspiel 🍻</h1>
+    <p>Mindestens 2 Spieler. Vor dem Start beliebig erweitern.</p>
+
+    <input id="playerName" placeholder="Spielername" />
+    <button onclick="addPlayer()">+ Spieler hinzufügen</button>
+
+    <div class="player-list">
+      ${players.map((p, i) => `<div class="player-pill">${i + 1}. ${p}</div>`).join("")}
+    </div>
+
+    <button class="plus-btn" onclick="showSetup(true)">＋ Eigene Kategorien</button>
+
+    ${showCustom ? `
+      <hr>
+      <h2>Eigene Kategorien</h2>
+
+      <input id="customCategoryName" placeholder="Neue Kategorie" />
+
+      <label>Antwortfelder für diese Kategorie:</label>
+      <select id="customCategoryLevel">
+        <option value="W">2 Antworten</option>
+        <option value="M" selected>3 Antworten</option>
+        <option value="V">5 Antworten</option>
+      </select>
+
+      <button class="secondary" onclick="addCustomCategory()">Kategorie hinzufügen</button>
+
+      <div class="player-list">
+        ${customCategories.length
+          ? customCategories.map((c, i) => `<div class="player-pill">${i + 1}. ${c.name} (${fieldCount[c.level]} Felder)</div>`).join("")
+          : `<p class="small">Noch keine eigenen Kategorien.</p>`
+        }
+      </div>
+
+      <label>
+        <input type="checkbox" id="onlyCustomToggle" ${useOnlyCustomCategories ? "checked" : ""} onchange="toggleOnlyCustom()" />
+        Nur mit eigenen Kategorien spielen
+      </label>
+    ` : ""}
+
+    <button class="success" onclick="startGame()">Spiel starten</button>
+    <p class="small">10 Runden. Jeder aktive Spieler rät maximal 3 Begriffe.</p>
+  `);
+
+  if (showCustom) {
+    setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }), 100);
+  }
+}
+
+function addPlayer() {
+  const input = document.getElementById("playerName");
+  const name = input.value.trim();
+  if (!name) return;
+  players.push(name);
+  showSetup();
+}
+
+function addCustomCategory() {
+  const name = document.getElementById("customCategoryName").value.trim();
+  const level = document.getElementById("customCategoryLevel").value;
+
+  if (!name) return;
+
+  customCategories.push({ name, level, custom: true });
+  showSetup(true);
+}
+
+function toggleOnlyCustom() {
+  useOnlyCustomCategories = document.getElementById("onlyCustomToggle").checked;
+}
+
+function startGame() {
+  if (players.length < 2) {
+    alert("Mindestens 2 Spieler nötig!");
+    return;
+  }
+
+  if (useOnlyCustomCategories && customCategories.length === 0) {
+    alert("Du brauchst mindestens eine eigene Kategorie!");
+    return;
+  }
+
+  categories = useOnlyCustomCategories
+    ? [...customCategories]
+    : [...defaultCategories, ...customCategories];
+
+  categories.sort(() => Math.random() - 0.5);
+
+  round = 1;
+  activePlayerIndex = 0;
+  showActivePlayer();
+}
+
+function showActivePlayer() {
+  const player = players[activePlayerIndex];
+
+  render(`
+    <h1>Runde ${round} / 10</h1>
+    <p>Aktiver Spieler:</p>
+    <div class="big">${player}</div>
+    <p>${player} darf gleich NICHT auf den Bildschirm schauen.</p>
+    <button onclick="showCategory()">Kategorie anzeigen</button>
+  `);
+}
+function rerollCategory() {
+  const currentName = currentCategory.name;
+
+  let available = categories.filter(c => c.name !== currentName);
+
+  if (available.length === 0) return;
+
+  currentCategory = available[Math.floor(Math.random() * available.length)];
+
+  render(`
+    <h1>Kategorie</h1>
+    <h2>${currentCategory.name}</h2>
+    <p>${fieldCount[currentCategory.level]} mögliche Felder pro Spieler. Weniger ist erlaubt.</p>
+
+    <button class="secondary" onclick="rerollCategory()">
+      🎲 Neue Kategorie
+    </button>
+
+    <button onclick="startSecretInputs()">
+      Eingabe starten
+    </button>
+  `);
+}
+function showCategory() {
+  const categoryIndex = ((round - 1) * players.length + activePlayerIndex) % categories.length;
+  currentCategory = categories[categoryIndex];
+
+  secretAnswers = [];
+  guessLevel = 0;
+  usedGuesses = [];
+
+  render(`
+  <h1>Kategorie</h1>
+  <h2>${currentCategory.name}</h2>
+  <p>${fieldCount[currentCategory.level]} mögliche Felder pro Spieler. Weniger ist erlaubt.</p>
+
+  <button class="secondary" onclick="rerollCategory()">
+    🎲 Neue Kategorie
+  </button>
+
+  <button onclick="startSecretInputs()">
+    Eingabe starten
+  </button>
+`);
+}
+
+function startSecretInputs() {
+  inputPlayerIndex = 0;
+  if (inputPlayerIndex === activePlayerIndex) inputPlayerIndex++;
+  showSecretInput();
+}
+
+function showSecretInput() {
+  if (inputPlayerIndex >= players.length) {
+    showPassToActivePlayer();
+    return;
+  }
+
+  if (inputPlayerIndex === activePlayerIndex) {
+    inputPlayerIndex++;
+    showSecretInput();
+    return;
+  }
+
+  const count = fieldCount[currentCategory.level];
+
+  let fields = "";
+  for (let i = 0; i < count; i++) {
+    fields += `<input class="secretInput" placeholder="Antwort ${i + 1}" autocomplete="off" />`;
+  }
+
+  render(`
+    <h1>${players[inputPlayerIndex]}</h1>
+    <h2>${currentCategory.name}</h2>
+    <p>Tippe deine geheimen Antworten ein.</p>
+    <p class="small">Du darfst auch weniger Felder ausfüllen.</p>
+    ${fields}
+    <button onclick="saveSecretInput()">Fertig / Weitergeben</button>
+  `);
+}
+
+function saveSecretInput() {
+  const inputs = document.querySelectorAll(".secretInput");
+
+  inputs.forEach(input => {
+    const raw = input.value.trim();
+    const clean = normalize(raw);
+
+    if (clean) {
+      secretAnswers.push({
+        player: players[inputPlayerIndex],
+        raw,
+        clean
+      });
+    }
+  });
+
+  inputPlayerIndex++;
+  showSecretInput();
+}
+
+function showPassToActivePlayer() {
+  render(`
+    <h1>Alle fertig!</h1>
+    <p>Jetzt Handy an den aktiven Spieler geben.</p>
+    <div class="big">${players[activePlayerIndex]}</div>
+    <button onclick="showGuessScreen()">Bereit zum Raten</button>
+  `);
+}
+
+function showGuessScreen(message = "") {
+  const reward = guessLevel === 0 ? 2 : guessLevel === 1 ? 4 : 8;
+
+  render(`
+    <h1>${players[activePlayerIndex]} rät</h1>
+    <h2>${currentCategory.name}</h2>
+    <p>Versuch ${guessLevel + 1} von 3</p>
+
+    ${message ? `<div class="result">${message}</div>` : ""}
+
+    <input id="guessInput" placeholder="Deine Antwort" autocomplete="off" />
+
+    <button onclick="checkGuess()">Antwort prüfen</button>
+
+    ${guessLevel > 0 ? `
+      <button class="success" onclick="stopAndGive()">Aufhören & ${reward} Schlücke verteilen</button>
+    ` : ""}
+  `);
+}
+const levelTexts = {
+    0: [
+    "Wie Omas Füße",
+    "Wie kann man so schlecht sein",
+    "Niete",
+    "Du Straßenköter",
+    "Depp",
+    "Du Lellek",
+    "Sharmuta",
+    "Hodenkobold",
+    "Du Loser",
+    "Kleiner fetter Loser",
+    "Idiot",
+    "Delulu",
+    "Cringe Brudi",
+    "Du Hund",
+    "Du Dumme Sau"
+  ],
+  
+  1: [
+    "Bare Minimum",
+    "Faule Sau",
+    "Meh",
+    "O.K.",
+    "Besser als gar nix",
+    "Immerhin",
+    "Solide",
+    "Warm-Up"
+  ],
+
+  2: [
+    "Alles Gucci",
+    "Nice",
+    "Geilomat",
+    "Astrein",
+    "Knorke",
+    "Supi",
+    "Fresher Boy",
+    "Tippi Toppi",
+    "Ob's bei euch gerade genauso ist",
+    "Sag Vallah",
+    "Überdurchschnittlich gut",
+    "Mensch geblieben",
+    "Doller Dyp"
+  ],
+
+  3: [
+    "Maximal eskaliert",
+    "AURA",
+    "Slay 💅",
+    "Trinkspiel-Maus",
+    "G.O.A.T",
+    "Jung, brutal, gutaussehend",
+    "Gestört aber geil",
+    "Absoluter Ficker",
+    "Amina koyim",
+    "Kranker Kerl",
+    "Mashallah, einfach der Hübsche",
+    "Ein Krieger wurde geweckt",
+    "SACH MA SCHALKEEEE",
+    "Nur Gott kann dich richten"
+  ]
+};
+
+function randomLevelText(level) {
+  const arr = levelTexts[level];
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+function checkGuess() {
+  const input = document.getElementById("guessInput");
+  const rawGuess = input.value.trim();
+  const cleanGuess = normalize(rawGuess);
+
+  if (!cleanGuess) return;
+
+  if (usedGuesses.includes(cleanGuess)) {
+    showGuessScreen("Schon genannt. Versuch einen anderen Begriff.");
+    return;
+  }
+
+  usedGuesses.push(cleanGuess);
+
+  const hits = secretAnswers.filter(a => a.clean === cleanGuess);
+
+  if (hits.length > 0) {
+    failRound(hits);
+    return;
+  }
+
+  guessLevel++;
+
+  if (guessLevel >= 3) {
+    render(`
+      <h1>🔥 ${randomLevelText(3)} 🔥</h1>
+      <p>Niemand hatte:</p>
+      <div class="big">${rawGuess}</div>
+      <div class="result">Du darfst 8 Schlücke verteilen!</div>
+      <button onclick="revealRemainingAnswers()">Antworten aufdecken</button>
+    `);
+    return;
+  }
+
+  const nextReward = guessLevel === 1 ? 2 : 4;
+
+  render(`
+    <h1>✅ ${randomLevelText(guessLevel)}</h1>
+    <p>Angeblich hatte niemand:</p>
+    <div class="big">${rawGuess}</div>
+    <div class="result">Falls Schreibweise/Abkürzung eigentlich getroffen wurde: Exit drücken.</div>
+
+    <button class="danger" onclick="manualExitAfterSafe()">Exit: zählt doch als Treffer</button>
+    <button class="success" onclick="stopAndGive()">Aufhören & ${nextReward} Schlücke verteilen</button>
+    <button class="danger" onclick="showGuessScreen()">Weiterzocken</button>
+  `);
+}
+
+function failRound(hits) {
+  const penalty = guessLevel === 0 ? 0 : guessLevel === 1 ? 2 : 4;
+  const hitNames = [...new Set(hits.map(h => h.player))].join(", ");
+  const hitWords = hits.map(h => `${h.player}: ${h.raw}`).join("<br>");
+
+  render(`
+    <h1>💀 ${randomLevelText(guessLevel)}</h1>
+    <p>Diese Antwort hatten:</p>
+    <div class="big">${hitNames}</div>
+    <div class="result">${hitWords}</div>
+
+    ${penalty > 0 
+      ? `
+        <div class="result">${players[activePlayerIndex]} trinkt ${penalty} Schlücke!</div>
+        <div class="result">${hitNames} dürfen jeweils zusätzlich ${penalty} Schlücke frei verteilen!</div>
+      `
+      : `<div class="result">Direkt erwischt. Keine Belohnung.</div>`
+    }
+
+    <button onclick="revealRemainingAnswers()">Antworten aufdecken</button>
+  `);
+}
+
+function manualExitAfterSafe() {
+  const penalty = guessLevel === 1 ? 0 : guessLevel === 2 ? 2 : 4;
+
+  render(`
+    <h1>🛑 Doch Treffer!</h1>
+    <p>Die Antwort wurde nachträglich als Treffer gewertet.</p>
+
+    ${penalty > 0
+      ? `<div class="result">${players[activePlayerIndex]} trinkt ${penalty} Schlücke!</div>`
+      : `<div class="result">Direkt erwischt. Keine Belohnung.</div>`
+    }
+
+    <p class="small">Wer die passende Antwort eingetragen hatte, darf entsprechend verteilen.</p>
+    <button onclick="revealRemainingAnswers()">Antworten aufdecken</button>
+  `);
+}
+
+function stopAndGive() {
+  const reward = guessLevel === 1 ? 2 : guessLevel === 2 ? 4 : 8;
+
+  render(`
+    <h1>🍻 Stabil!</h1>
+    <div class="big">${players[activePlayerIndex]}</div>
+    <div class="result">Du verteilst ${reward} Schlücke!</div>
+    <button onclick="revealRemainingAnswers()">Antworten aufdecken</button>
+  `);
+}
+
+function revealRemainingAnswers() {
+  const answersHtml = secretAnswers.length
+    ? secretAnswers.map(a => `
+        <div class="player-pill">
+          <strong>${a.player}:</strong> ${a.raw}
+        </div>
+      `).join("")
+    : `<p>Keine Antworten eingetragen.</p>`;
+
+  render(`
+    <h1>👀 Aufdeckung</h1>
+    <h2>${currentCategory.name}</h2>
+    <p>Das waren die geheimen Antworten:</p>
+
+    <div class="player-list">
+      ${answersHtml}
+    </div>
+
+    <button onclick="nextTurn()">Nächster Spieler / neue Kategorie</button>
+  `);
+}
+
+function nextTurn() {
+  activePlayerIndex++;
+
+  if (activePlayerIndex >= players.length) {
+    activePlayerIndex = 0;
+    round++;
+  }
+
+  if (round > 10) {
+    showEnd();
+    return;
+  }
+
+  showActivePlayer();
+}
+
+function showEnd() {
+  render(`
+    <h1>🏁 Spiel vorbei!</h1>
+    <p>10 Runden geschafft.</p>
+    <div class="big">Prost, ihr Legenden!</div>
+    <button onclick="showSetup()">Neues Spiel</button>
+  `);
+}
+
+showSetup();
+</script>
+</body>
+</html>
